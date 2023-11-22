@@ -1,11 +1,241 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Agenda</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
 </head>
+
 <body>
-    
+    <div class="container mt-3">
+        <div class="row">
+            <div class="col">
+                <h3>Agenda de contatos</h3>
+            </div>
+            <div class="col text-end">
+                <button id="btnAdicionar" class="btn btn-primary">+ adicionar</button>
+            </div>
+        </div>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Idade</th>
+                    <th>Telefone</th>
+                    <th>Email</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tabela">
+            </tbody>
+        </table>
+    </div>
+
+    <div id="modalAdicionar" class="modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar Contato</h5>
+                    <button type="button" id="btnAdicionarClose" class="btn-close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formCreate">
+                        <div class="mb-1">
+                            <label for="nomeCreate" class="form-label">Nome</label>
+                            <input type="text" class="form-control" id="nomeCreate">
+                        </div>
+                        <div class="mb-1">
+                            <label for="idadeCreate" class="form-label">Idade</label>
+                            <input type="number" class="form-control" id="idadeCreate">
+                        </div>
+                        <div class="mb-1">
+                            <label for="telefoneCreate" class="form-label">Telefone</label>
+                            <input type="tel" class="form-control" id="telefoneCreate">
+                        </div>
+                        <div class="mb-2">
+                            <label for="emailCreate" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="emailCreate">
+                        </div>
+                        <div class="text-end">
+                            <button id="btnAdicionarSalvar" type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="modalEditar" class="modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Contato</h5>
+                    <button type="button" id="btnEditarClose" class="btn-close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formUpdate">
+                        <div class="mb-1">
+                            <label for="nomeUpdate" class="form-label">Nome</label>
+                            <input type="text" class="form-control" id="nomeUpdate">
+                        </div>
+                        <div class="mb-1">
+                            <label for="idadeUpdate" class="form-label">Idade</label>
+                            <input type="number" class="form-control" id="idadeUpdate">
+                        </div>
+                        <div class="mb-1">
+                            <label for="telefoneUpdate" class="form-label">Telefone</label>
+                            <input type="tel" class="form-control" id="telefoneUpdate">
+                        </div>
+                        <div class="mb-2">
+                            <label for="emailUpdate" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="emailUpdate">
+                        </div>
+                        <div class="text-end">
+                            <button id="btnEditarSalvar" type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="overlay" style="
+        position: fixed;
+        height: 100%;
+        width: 100%;
+        top: 0;
+        left: 0;
+        background-color: rgb(0, 0, 0, 0.5);
+        display: none;
+    "></div>
+
+    <script>
+        let contatos = []
+        const overlay = document.getElementById('overlay')
+
+        const modalEditar = document.getElementById('modalEditar')
+        const btnEditarClose = document.getElementById('btnEditarClose')
+        const btnEditarSalvar = document.getElementById('btnEditarSalvar')
+        const formUpdate = document.getElementById('formUpdate')
+
+        const modalAdicionar = document.getElementById('modalAdicionar')
+        const btnAdicionar = document.getElementById('btnAdicionar')
+        const btnAdicionarClose = document.getElementById('btnAdicionarClose')
+        const btnAdicionarSalvar = document.getElementById('btnAdicionarSalvar')
+        const formCreate = document.getElementById('formCreate')
+
+        function toogleModal(modal) {
+            const isAparente = modal.style.display === 'block'
+
+            modal.style.display = isAparente ? 'none' : 'block'
+            overlay.style.display = isAparente ? 'none' : 'block'
+        }
+
+        function adicionarContato(event) {
+            event.preventDefault()
+
+            let nome = document.getElementById('nomeCreate').value
+            let idade = document.getElementById('idadeCreate').value
+            let telefone = document.getElementById('telefoneCreate').value
+            let email = document.getElementById('emailCreate').value
+
+            const contato = { nome, idade, telefone, email }
+
+            fetch('http://localhost:5000/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(contato)
+            }).then(() => {
+                buscarContatos()
+            })
+            formCreate.reset();
+        }
+
+        function editarContato(index) {
+            const contato = contatos[index]
+            toogleModal(modalEditar)
+
+            document.getElementById('nomeUpdate').value = contato.nome
+            document.getElementById('idadeUpdate').value = contato.idade
+            document.getElementById('telefoneUpdate').value = contato.telefone
+            document.getElementById('emailUpdate').value = contato.email
+
+            formUpdate.addEventListener('submit', function (event) {
+                event.preventDefault()
+                const novoContato = {
+                    nome: document.getElementById('nomeUpdate').value,
+                    idade: document.getElementById('idadeUpdate').value,
+                    telefone: document.getElementById('telefoneUpdate').value,
+                    email: document.getElementById('emailUpdate').value,
+                }
+                fetch(`http://localhost:5000/update/${contato.nome}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(novoContato)
+                }).then(() => {
+                    buscarContatos()
+                })
+                formUpdate.reset()
+            })
+
+
+        }
+
+        function apagarContato(index) {
+            const apagar = confirm('Você deseja apagar esse contato?')
+            if (apagar) {
+                fetch(`http://localhost:5000/delete/${contatos[index].nome}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                }).then(() => {
+                    buscarContatos()
+                })
+            }
+        }
+
+        function renderizarTabela() {
+            const tabela = document.getElementById('tabela')
+            tabela.innerHTML = ''
+            contatos.forEach((contato, index) => {
+                tabela.innerHTML += `
+                    <tr>
+                        <td>${contato.nome}</td>
+                        <td>${contato.idade}</td>
+                        <td>${contato.telefone}</td>
+                        <td>${contato.email}</td>
+                        <td>
+                            <button class="btn btn-primary" onclick="editarContato(${index})">Editar</button>    
+                            <button class="btn btn-danger" onclick="apagarContato(${index})">Apagar</button>    
+                        </td>
+                    </tr>
+                `
+            })
+        }
+
+        function buscarContatos() {
+            fetch('http://localhost:5000/api')
+                .then(response => response.json())
+                .then(dados => {
+                    contatos = dados
+                    renderizarTabela()
+                })
+        }
+
+        btnAdicionar.addEventListener('click', () => toogleModal(modalAdicionar))
+        btnAdicionarClose.addEventListener('click', () => toogleModal(modalAdicionar))
+        btnAdicionarSalvar.addEventListener('click', () => toogleModal(modalAdicionar))
+        formCreate.addEventListener('submit', adicionarContato)
+
+        btnEditarClose.addEventListener('click', () => toogleModal(modalEditar))
+        btnEditarSalvar.addEventListener('click', () => toogleModal(modalEditar))
+
+        document.addEventListener('DOMContentLoaded', buscarContatos)
+    </script>
+
 </body>
+
 </html>
