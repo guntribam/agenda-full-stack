@@ -1,0 +1,12 @@
+{
+  "name": "agenda-full-stack",
+  "version": "1.0.0",
+  "description": "",
+  "main": "backend.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "echo \"Gunter é lindo\""
+  },
+  "author": "guntribam",
+  "license": "ISC"
+}
